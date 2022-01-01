@@ -16,15 +16,15 @@ def handler(signum, frame):
 def print_results(results:list, args):
 
     pro_cnt = 0
-    ave_cnt = 0
     str_cnt = 0
-    cas_cnt = 0
+    ave_total = 0
 
     for result in results:
         pro_cnt += 1
         temp_res = result
         str_sig = True
-        ave_sig = False
+        cas_cnt = 0
+        ave_cnt = 0
 
         for i in temp_res:
             cas_cnt += 1
@@ -35,20 +35,19 @@ def print_results(results:list, args):
                 str_sig = False
                 continue
             elif(True == i):
-                ave_sig = True
+                ave_cnt += 1
                 continue
             else:
                 print("WORNG!!!!!!!!!!!!")
 
+
         if(True == str_sig):
             str_cnt += 1
-        if(True == ave_sig):
-            #print(temp_res)
-            ave_cnt += 1
+        if(cas_cnt != 0):
+            ave_total += ave_cnt/cas_cnt
 
-
-    print(ave_cnt, str_cnt, pro_cnt)
-    print(f"Test Case Average (average accuracy over problems) = {ave_cnt/cas_cnt}")
+    print("ave_total:", ave_total, "\nstr_cnt:", str_cnt, "\npro_cnt:", pro_cnt)
+    print(f"Test Case Average (average accuracy over problems) = {ave_total/pro_cnt}")
     print(f"Strict Accuracy (all test cases passed / total problems) = {str_cnt/pro_cnt}")
 
 
@@ -59,7 +58,7 @@ def eval_and_save_problems(args, i, results_loc, problems, gpt_codes):
         try:
             if args.debug:
                 print(f"\n\nproblem path = {problem}")
-            output_str = gpt_codes[str(index+i)]
+            output_str = gpt_codes[index]
         except:
             print("CANNOT FIND OUTPUT_STR FOR", problem)
             continue
@@ -91,8 +90,8 @@ def eval_and_save_problems(args, i, results_loc, problems, gpt_codes):
                     e = bool(e)
                 fixed.append(e)
             curr_res = fixed
-            if not np.all(curr_res):
-                print(f"     {curr_res}")
+            #if not np.all(curr_res):
+                #print(f"     {curr_res}")
         except AssertionError as e:
             print(f"test framework exception = {repr(e)}{e}\n")
         finally:
@@ -122,9 +121,9 @@ def get_data(args):
     gpt_bleu = {}
     gpt_codebleu = {}
     results = {}
-    codes_loc = os.path.join(args.save, f"all_codes_old.json")
+    codes_loc = os.path.join(args.save, f"all_codes-Copy1.json")
     if not os.path.exists(codes_loc):
-        codes_loc = os.path.join(args.save, f"{args.start}-{args.end}_codes_old.json")
+        codes_loc = os.path.join(args.save, f"{args.start}-{args.end}_codes-Copy1.json")
 
     if os.path.exists(codes_loc):
         results_loc = os.path.join(args.save, f"all_results.json") 
@@ -171,30 +170,36 @@ args = parser.parse_args()
 
 if(args.get_results):
     a = []
+    codes = []
     problems, gpt_codes, results_loc = get_data(args)
+
+    for value in gpt_codes.values():
+        codes.append(value)
+    #print(codes[:10])
 
     for i in range(10):
         for j in range(10):
             for k in range(10):
-                a.append(Process(target=eval_and_save_problems, 
-                                 args=(args, i*500+j*50+k*5, results_loc, problems[(i*500+j*50+k*5):(i*500+j*50*(k+1)*5)], gpt_codes, )))
+                a.append(Process(target=eval_and_save_problems,
+                                 args=(args, i*500+j*50+k*5, results_loc, 
+                                       problems[(i*500+j*50+k*5):(i*500+j*50+(k+1)*5)], 
+                                       codes[(i*500+j*50+k*5):(i*500+j*50+(k+1)*5)], )))
                 a[i*100+j*10+k].start()
-            time.sleep(1)
-        time.sleep(1)
-
+                time.sleep(k*0.1)
+                #break
+            time.sleep(j)
             #break
+        time.sleep(i*10)
         #break
 
-    #for i in range(10):
-        #a[i].start()
-        #a[i].join()
+
 
 if(args.print_results):
     filePath = './results_ml/'
 
     dirlist= os.listdir(filePath)
-    print(dirlist)
-    
+    #print(dirlist)
+
     results = []
     cont = 0
     for file in dirlist:
@@ -205,11 +210,11 @@ if(args.print_results):
                     #print(value)
                     cont += 1
                     results.append(value)
-                    
+
     print("total questions:" ,cont)
     #print(type(results))
     #for index in results
-        
+
     print_results(results, args)
 
 
