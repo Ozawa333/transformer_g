@@ -6,8 +6,10 @@ import torch.nn as nn
 # src_vocab_size = 295
 # tgt_vocab_size = 255
 
-src_vocab_size = 45021  # min_freq=2
-tgt_vocab_size = 69149  # min_freq=3
+src_vocab_size = 30000  
+tgt_vocab_size = 30000  
+print("src_vocab_size = ", src_vocab_size, "\ntgt_vocab_size = ", tgt_vocab_size)
+
 
 d_model = 512    # Embedding Size
 d_ff = 2048      # FeedForward dimension
